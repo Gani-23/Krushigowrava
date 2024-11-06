@@ -62,13 +62,13 @@ const About = () => {
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Our Founder</h2>
             <p className="text-lg md:text-xl mb-6">
-              Krushi Gowrava was founded by <strong>Saiganesh Angadi</strong>, an entrepreneur passionate about bringing fresh, organic products directly from the farm to the customer’s doorstep.
+              Krushi Gowrava was founded by <strong>Viswas Prabhu</strong>, an entrepreneur passionate about bringing fresh, organic products directly from the farm to the customer’s doorstep.
             </p>
             <div className="flex justify-center">
               <div className="w-75 h-75 rounded-full overflow-hidden border-4 border-white mb-6">
                 <Image
                   src="/images/founders/gani.png"
-                  alt="Saiganesh Angadi"
+                  alt="Viswas Prabhu"
                   width={250}
                   height={250}
                   className="object-cover"
@@ -225,5 +225,6 @@ const testimonials = [
     location: 'Chennai, India',
   },
 ];
-
+// source code belongs to sole developer of the project 
+// Saiganesh Angadi
 export default About;

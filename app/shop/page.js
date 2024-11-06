@@ -144,4 +144,7 @@ const SignupForm = () => {
   );
 };
 
+// source code belongs to sole developer of the project 
+// Saiganesh Angadi
+
 export default SignupForm;

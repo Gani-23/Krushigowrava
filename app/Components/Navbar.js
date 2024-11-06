@@ -101,5 +101,7 @@ const Navbar = () => {
     </nav>
   );
 };
+// source code belongs to sole developer of the project 
+// Saiganesh Angadi
 
 export default Navbar;
