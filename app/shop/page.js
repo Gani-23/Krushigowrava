@@ -1,24 +1,27 @@
 "use client";
 
-import { motion } from 'framer-motion';
-import { useState } from 'react';
-import Navbar from '../Components/Navbar';
-import { Router } from 'next/router';
-require('dotenv').config();
+import { motion } from "framer-motion";
+import { useState } from "react";
+import Navbar from "../Components/Navbar";
+import { useRouter } from "next/navigation"; // Correct import for Next.js 13+ and later
 
-const SignupURL = process.env.REGISTER_URL
-;
+require("dotenv").config();
+
+const SignupURL = process.env.REGISTER_URL;
+
 const SignupForm = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    username: '',
-    email: '',
-    password: '',
+    name: "",
+    username: "",
+    email: "",
+    password: "",
   });
-  const [message, setMessage] = useState('');
-  const projects = ['KrushiGowrava']; // Changed to array
-  const role = 'user';
+  const [message, setMessage] = useState("");
+  const projects = ["KrushiGowrava"]; // Changed to array
+  const role = "user";
   const [loading, setLoading] = useState(false);
+
+  const router = useRouter(); // Move `useRouter` to the top level of the component
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,27 +33,34 @@ const SignupForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // Set loading state
+    setLoading(true);
 
     const userData = { ...formData, role, projects };
 
     try {
-      const response = await fetch("https://oauth4-0.on.shiper.app/api/users/register", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      const response = await fetch(
+        "https://oauth4-0.on.shiper.app/api/users/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userData),
+        }
+      );
 
       const data = await response.json();
-      if (response.ok) {
-        setMessage(data.message);
-        Router.push('/login');
+
+      if (data.success) {
+        localStorage.clear(); // Clear the storage on successful registration
+        setMessage(data.message || "Registration successful!");
+
+        router.push("/login"); // Navigate to login page after success
       } else {
-        setMessage(data.error || "An error occurred.");
+        setMessage(data.message || "Registration failed. Please try again.");
       }
     } catch (error) {
+      console.error("Error during registration submission:", error);
       setMessage("Failed to submit. Please try again.");
     } finally {
       setLoading(false); // Reset loading state
@@ -72,11 +82,18 @@ const SignupForm = () => {
           animate={{ scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl font-bold text-black dark:text-white mb-6 text-center">Sign Up</h2>
+          <h2 className="text-2xl font-bold text-black dark:text-white mb-6 text-center">
+            Sign Up
+          </h2>
           {message && <p className="text-center text-red-500">{message}</p>}
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label className="block text-sm text-black dark:text-white mb-2" htmlFor="name">Name</label>
+              <label
+                className="block text-sm text-black dark:text-white mb-2"
+                htmlFor="name"
+              >
+                Name
+              </label>
               <input
                 type="text"
                 id="name"
@@ -89,7 +106,12 @@ const SignupForm = () => {
               />
             </div>
             <div className="mb-4">
-              <label className="block text-sm text-black dark:text-white mb-2" htmlFor="username">Username</label>
+              <label
+                className="block text-sm text-black dark:text-white mb-2"
+                htmlFor="username"
+              >
+                Username
+              </label>
               <input
                 type="text"
                 id="username"
@@ -102,7 +124,12 @@ const SignupForm = () => {
               />
             </div>
             <div className="mb-4">
-              <label className="block text-sm text-black dark:text-white mb-2" htmlFor="email">Email</label>
+              <label
+                className="block text-sm text-black dark:text-white mb-2"
+                htmlFor="email"
+              >
+                Email
+              </label>
               <input
                 type="email"
                 id="email"
@@ -115,7 +142,12 @@ const SignupForm = () => {
               />
             </div>
             <div className="mb-4">
-              <label className="block text-sm text-black dark:text-white mb-2" htmlFor="password">Password</label>
+              <label
+                className="block text-sm text-black dark:text-white mb-2"
+                htmlFor="password"
+              >
+                Password
+              </label>
               <input
                 type="password"
                 id="password"
@@ -129,22 +161,27 @@ const SignupForm = () => {
             </div>
             <button
               type="submit"
-              className={`w-full py-2 ${loading ? 'bg-gray-400' : 'bg-black'} text-white rounded hover:bg-gray-800 transition duration-200`}
+              className={`w-full py-2 ${
+                loading ? "bg-gray-400" : "bg-black"
+              } text-white rounded hover:bg-gray-800 transition duration-200`}
               disabled={loading}
             >
-              {loading ? 'Signing Up...' : 'Sign Up'}
+              {loading ? "Signing Up..." : "Sign Up"}
             </button>
           </form>
           <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
-            Already have an account? <a href="/login" className="text-black dark:text-white hover:underline">Log in</a>
+            Already have an account?{" "}
+            <a
+              href="/login"
+              className="text-black dark:text-white hover:underline"
+            >
+              Log in
+            </a>
           </p>
         </motion.div>
       </motion.div>
     </>
   );
 };
-
-// source code belongs to sole developer of the project 
-// Saiganesh Angadi
 
 export default SignupForm;
