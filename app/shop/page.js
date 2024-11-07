@@ -17,7 +17,7 @@ const SignupForm = () => {
     password: "",
   });
   const [message, setMessage] = useState("");
-  const projects = ["KrushiGowrava"]; // Changed to array
+  const projects = ["krushigowrava"]; // Changed to array
   const role = "user";
   const [loading, setLoading] = useState(false);
 
