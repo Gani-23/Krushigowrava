@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { FaCartPlus, FaHeart, FaSearch } from "react-icons/fa";
-import Navbar from "../Components/Navbar";
+import dynamic from "next/dynamic";
+import { useDebouncedCallback } from "use-debounce";
+
+// Dynamically import Navbar (important for SSR optimization)
+const Navbar = dynamic(() => import("../Components/Navbar"), { ssr: false });
 
 const ProductPage = () => {
   const [activeTab, setActiveTab] = useState("products");
@@ -16,6 +20,19 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await fetch("https://oauth4-0.on.shiper.app/api/products");
+      if (!response.ok) throw new Error("Failed to fetch products");
+      const data = await response.json();
+      setProducts(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const storedUsername = sessionStorage.getItem("username");
     if (storedUsername) {
@@ -24,21 +41,13 @@ const ProductPage = () => {
   }, []);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await fetch("https://oauth4-0.on.shiper.app/api/products");
-        if (!response.ok) throw new Error("Failed to fetch products");
-        const data = await response.json();
-        setProducts(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
+
+  // Debounced search
+  const handleSearch = useDebouncedCallback((value) => {
+    setSearchTerm(value);
+  }, 500);
 
   const handleAddToCart = (product) => {
     setCart((prevCart) => {
@@ -57,7 +66,7 @@ const ProductPage = () => {
     setWishlist((prevWishlist) => {
       const exists = prevWishlist.find((item) => item._id === product._id);
       if (exists) {
-        showMessage("This item is already in your wishlist!");
+        alert("This item is already in your wishlist!");
         return prevWishlist;
       } else {
         return [...prevWishlist, product];
@@ -73,17 +82,17 @@ const ProductPage = () => {
     setWishlist((prevWishlist) => prevWishlist.filter((item) => item._id !== id));
   };
 
-  const showMessage = (message) => {
-    alert(message);
-  };
-
   const filteredProducts = products.filter((product) =>
     product.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const calculateTotal = () => {
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+  };
+
   const sendOrderSummary = () => {
     if (cart.length === 0) {
-      showMessage("Your cart is empty!");
+      alert("Your cart is empty!");
       return;
     }
 
@@ -104,7 +113,15 @@ const ProductPage = () => {
   const CartItem = ({ item, onRemove }) => (
     <div className="flex items-center justify-between mb-4 border-b border-gray-300 pb-4">
       <div className="flex items-center">
-        <Image src={item.imgSrc} alt={item.title} width={60} height={60} className="rounded-lg" />
+        <Image
+          src={item.imgSrc}
+          alt={item.title}
+          width={80}
+          height={80}
+          quality={100}
+          className="rounded-lg"
+          sizes="(max-width: 640px) 50px, 80px"
+        />
         <div className="ml-4">
           <h4 className="text-lg font-semibold">{item.title}</h4>
           <p className="text-sm text-gray-600">₹{(item.price * item.quantity).toFixed(2)}</p>
@@ -112,7 +129,10 @@ const ProductPage = () => {
       </div>
       <div className="flex items-center space-x-4">
         <span className="text-lg font-semibold">x{item.quantity}</span>
-        <button onClick={() => onRemove(item._id)} className="text-red-500 hover:text-red-700">
+        <button
+          onClick={() => onRemove(item._id)}
+          className="text-red-500 hover:text-red-700"
+        >
           Remove
         </button>
       </div>
@@ -122,25 +142,31 @@ const ProductPage = () => {
   const WishlistItem = ({ item, onRemove }) => (
     <div className="flex items-center justify-between mb-4 border-b border-gray-300 pb-4">
       <div className="flex items-center">
-        <Image src={item.imgSrc} alt={item.title} width={60} height={60} className="rounded-lg" />
+        <Image
+          src={item.imgSrc}
+          alt={item.title}
+          width={80}
+          height={80}
+          quality={100}
+          className="rounded-lg"
+        />
         <div className="ml-4">
           <h4 className="text-lg font-semibold">{item.title}</h4>
         </div>
       </div>
-      <button onClick={() => onRemove(item._id)} className="text-red-500 hover:text-red-700">
+      <button
+        onClick={() => onRemove(item._id)}
+        className="text-red-500 hover:text-red-700"
+      >
         Remove
       </button>
     </div>
   );
 
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="spinner"></div>
+        <div className="spinner">Loading...</div>
       </div>
     );
   }
@@ -156,18 +182,19 @@ const ProductPage = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-gray-100 py-20 px-4 md:px-12">
-        <h1 className="text-5xl font-extrabold text-center text-gray-900 mb-8">Our Store</h1>
+      <div className="bg-gray-100 py-12 px-6 sm:px-10 md:px-14 lg:px-20 xl:px-28">
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-center text-gray-900 mb-8">
+          Our Store
+        </h1>
         {username && <h2 className="text-xl text-center text-gray-700 mb-6">Hello, {username}!</h2>}
 
         {/* Search Bar */}
         <div className="flex justify-center mb-8">
-          <div className="relative w-1/2 sm:w-1/3">
+          <div className="relative w-full sm:w-2/3 md:w-1/2 lg:w-1/3">
             <input
               type="text"
               placeholder="Search for products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="w-full py-3 pl-10 pr-4 rounded-xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <FaSearch className="absolute left-3 top-3 text-gray-500" />
@@ -178,31 +205,31 @@ const ProductPage = () => {
         <div className="flex justify-center mb-8 space-x-4">
           <button
             onClick={() => setActiveTab("products")}
-            className={`py-3 px-6 text-lg font-semibold ${activeTab === "products" ? "bg-black text-white" : "bg-gray-200 text-gray-700"} rounded-xl transition`}
+            className={`py-3 px-6 text-lg font-semibold ${activeTab === "products" ? "bg-black text-white" : "bg-gray-200 text-gray-700"} rounded-xl transition-all`}
           >
             Products
           </button>
           <button
             onClick={() => setActiveTab("cart")}
-            className={`py-3 px-6 text-lg font-semibold ${activeTab === "cart" ? "bg-black text-white" : "bg-gray-200 text-gray-700"} rounded-xl transition`}
+            className={`py-3 px-6 text-lg font-semibold ${activeTab === "cart" ? "bg-black text-white" : "bg-gray-200 text-gray-700"} rounded-xl transition-all`}
           >
             Cart ({cart.length})
           </button>
           <button
             onClick={() => setActiveTab("wishlist")}
-            className={`py-3 px-6 text-lg font-semibold ${activeTab === "wishlist" ? "bg-black text-white" : "bg-gray-200 text-gray-700"} rounded-xl transition`}
+            className={`py-3 px-6 text-lg font-semibold ${activeTab === "wishlist" ? "bg-black text-white" : "bg-gray-200 text-gray-700"} rounded-xl transition-all`}
           >
             Wishlist ({wishlist.length})
           </button>
         </div>
 
-        {/* Product List */}
+        {/* Products Display */}
         {activeTab === "products" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {filteredProducts.map((product) => (
               <motion.div
                 key={product._id}
-                className="flex flex-col bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 hover:shadow-2xl transition-all"
+                className="flex flex-col bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 hover:shadow-xl transition-all"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
@@ -213,28 +240,28 @@ const ProductPage = () => {
                     alt={product.title}
                     width={500}
                     height={500}
+                    quality={100}
                     className="w-full h-full object-cover object-center"
+                    sizes="(max-width: 640px) 200px, (max-width: 768px) 300px, 400px"
                   />
                 </div>
                 <div className="px-6 py-4">
-                  <h3 className="text-xl font-semibold text-gray-900">{product.title}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{product.title}</h3>
                   <p className="text-md text-gray-600 mt-2">{product.description}</p>
                   <div className="flex justify-between items-center mt-4">
                     <span className="text-xl font-bold text-gray-800">₹{product.price}</span>
                     <div className="flex space-x-4">
                       <button
                         onClick={() => handleAddToCart(product)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 flex items-center"
+                        className="text-blue-600 hover:text-blue-800 text-2xl"
                       >
-                        <FaCartPlus className="mr-2" />
-                        Add to Cart
+                        <FaCartPlus />
                       </button>
                       <button
                         onClick={() => handleAddToWishlist(product)}
-                        className="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 flex items-center"
+                        className="text-red-600 hover:text-red-800 text-2xl"
                       >
-                        <FaHeart className="mr-2" />
-                        Wishlist
+                        <FaHeart />
                       </button>
                     </div>
                   </div>
@@ -244,8 +271,10 @@ const ProductPage = () => {
           </div>
         )}
 
-        {/* Cart */}
-        {activeTab === "cart" && (
+        {/* Cart & Wishlist Sections */}
+        {/* These sections will remain as before, showing cart items or wishlist items */}
+          {/* Cart */}
+          {activeTab === "cart" && (
           <div>
             {cart.length === 0 ? (
               <p className="text-center text-lg text-gray-700">Your cart is empty!</p>
@@ -290,3 +319,8 @@ const ProductPage = () => {
 };
 
 export default ProductPage;
+
+
+//
+      
+//
