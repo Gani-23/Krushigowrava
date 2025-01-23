@@ -84,7 +84,7 @@ const ContactUs = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: "easeInOut" }}
           >
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-8">Our Office is king bong</h2>
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-8">Our Office</h2>
             <div className="flex flex-col md:flex-row justify-center items-stretch gap-8 max-w-5xl mx-auto">
               {/* Address Section */}
               <div className="bg-gray-900 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col items-start space-y-4 transform hover:scale-105">
